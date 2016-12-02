@@ -650,6 +650,7 @@ static PyObject *
 Semaphore_acquire(Semaphore *self, PyObject *args, PyObject *keywords) {
     NoneableTimeout timeout;
     int rc = 0;
+    static char *keyword_list[] = {"timeout", NULL};
 
     if (!test_semaphore_validity(self))
         goto error_return;
@@ -659,7 +660,8 @@ Semaphore_acquire(Semaphore *self, PyObject *args, PyObject *keywords) {
 
     // acquire([timeout=None])
 
-    if (!PyArg_ParseTuple(args, "|O&", convert_timeout, &timeout))
+    if (!PyArg_ParseTupleAndKeywords(args, keywords, "|O&", keyword_list,
+                                     convert_timeout, &timeout))
         goto error_return;
 
     Py_BEGIN_ALLOW_THREADS
@@ -1653,11 +1655,13 @@ MessageQueue_receive(MessageQueue *self, PyObject *args, PyObject *keywords) {
     unsigned int priority = 0;
     ssize_t size = 0;
     PyObject *py_return_tuple = NULL;
+    static char *keyword_list[ ] = {"timeout", NULL};
 
     // Initialize this to the default of None.
     timeout.is_none = 1;
 
-    if (!PyArg_ParseTuple(args, "|O&", convert_timeout, &timeout))
+    if (!PyArg_ParseTupleAndKeywords(args, keywords, "|O&", keyword_list,
+    							     convert_timeout, &timeout))
         goto error_return;
 
     if (!self->receive_permitted) {
@@ -1840,18 +1844,20 @@ void process_notification(union sigval notification_data) {
     DPRINTF("exiting thread\n");
 };
 
-
 static PyObject *
-MessageQueue_request_notification(MessageQueue *self, PyObject *args) {
+MessageQueue_request_notification(MessageQueue *self, PyObject *args,
+							      PyObject *keywords) {
     struct sigevent notification;
     PyObject *py_callback = NULL;
     PyObject *py_callback_param = NULL;
     PyObject *py_notification = Py_None;
     int param_is_ok = 1;
+    static char *keyword_list[ ] = {"notification", NULL};
 
     // request_notification(notification = None)
 
-    if (!PyArg_ParseTuple(args, "|O", &py_notification))
+    if (!PyArg_ParseTupleAndKeywords(args, keywords, "|O", keyword_list,
+    								 &py_notification))
         goto error_return;
 
     // py_notification can be None ==> cancel, an int ==> signal,
@@ -2095,7 +2101,7 @@ static PyMethodDef Semaphore_methods[] = {
     },
     {   "acquire",
         (PyCFunction)Semaphore_acquire,
-        METH_VARARGS,
+        METH_VARARGS | METH_KEYWORDS,
         "Acquire (grab) the semaphore, waiting if necessary"
     },
     {   "release",
@@ -2319,7 +2325,7 @@ static PyMethodDef MessageQueue_methods[] = {
     },
     {   "receive",
         (PyCFunction)MessageQueue_receive,
-        METH_VARARGS,
+        METH_VARARGS | METH_KEYWORDS,
         "Receive a message from the queue"
     },
     {   "close",
@@ -2334,7 +2340,7 @@ static PyMethodDef MessageQueue_methods[] = {
     },
     {   "request_notification",
         (PyCFunction)MessageQueue_request_notification,
-        METH_VARARGS,
+        METH_VARARGS | METH_KEYWORDS,
         "Request notification of the queue becoming non-empty"
     },
 
