@@ -206,10 +206,9 @@ def sniff_mq_prio_max():
     if max_priority is None:
         # Looking for a #define didn't work; ask sysconf() instead.
         # Note that sys.sysconf_names doesn't exist under Cygwin.
-        if hasattr(os, "sysconf_names") and \
-           ("SC_MQ_PRIO_MAX" in os.sysconf_names):
+        try:
             max_priority = os.sysconf("SC_MQ_PRIO_MAX")
-        else:
+        except:
             max_priority = DEFAULT_PRIORITY_MAX
             print_bad_news("the value of PRIORITY_MAX", max_priority)
 
